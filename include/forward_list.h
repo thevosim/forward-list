@@ -8,12 +8,12 @@ class ForwardList
 	{
 		T m_data;
 		Node* m_next = nullptr;
-		Node(T data, Node* next = nullptr) : m_data{data}, m_next{next}
-        {}
+		Node(T data, Node* next = nullptr) : m_data{data}, m_next{next} {}
 	};
 	Node* first = nullptr;
     int m_size = 0;
 public:
+	ForwardList(){}
 	ForwardList(size_t n, T def)
 	{
 		if(n == 0) return;
@@ -41,21 +41,23 @@ public:
 	// copy constr, operator=
 	void copy(const ForwardList& list)
 	{
-		Node* curr = first;
-		while(curr)
+		if(!(list.first)) return;
+		Node* cur_this = first;
+		while(cur_this)
 		{
-			Node* tmp = curr->m_next;
-			delete curr;
-			curr = tmp;
+			Node* tmp = cur_this->m_next;
+			delete cur_this;
+			cur_this = tmp;
 		}
-		if(!list.first) return;
 
 		first = new Node(list.first->m_data);
-		for(Node* curr = first; !curr; curr = curr->m_next)
+		Node* curr = first;
+		Node* src_curr = list.first->m_next;
+		while(src_curr)
 		{
-			Node* tmp = new Node(curr->m_data);
-			curr->m_next = tmp;
+			curr->m_next = new Node(src_curr->m_data);
 			curr = curr->m_next;
+			src_curr = src_curr->m_next;
 		}
         m_size = list.m_size;
 	}
@@ -65,40 +67,45 @@ public:
 		if(first != list.first) copy(list);
 		return *this;
 	}
-	Node* push_front(T elem)
+	void push_front(T elem)
 	{
 		Node* tmp = new Node(elem);
-		tmp->next = first;
-		first = tmp;	
+		tmp->m_next = first;
+		first = tmp;
+		++m_size;
 	}
-	Node* insert_after(T elem, Node* prev)
+	Node* insert_after(Node* prev, T elem)
 	{
+		++m_size;
 		if(!prev)
 		{
 			push_front(elem);
 			return nullptr;
 		}
 		Node* tmp = new Node(elem);
-		tmp->next = prev->next;
-		prev->next = tmp;
+		tmp->m_next = prev->m_next;
+		prev->m_next = tmp;
+		return prev->m_next;
 	}
 	Node* erase_after(Node* prev)
 	{
 		if(!prev) return erase_front();
 		if(prev->m_next)
 		{
-			Node* tmp = prev->next->m_next;
+			Node* tmp = prev->m_next->m_next;
 			delete prev->m_next;
 			prev->m_next = tmp;
+			--m_size;
 		}
 		return nullptr;
 	}
-	Node* erase_front(Node* prev)
+	Node* erase_front()
 	{
 		if(!first) return nullptr;
-		Node* tmp = first->next;
+		Node* tmp = first->m_next;
 		delete first;
 		first = tmp;
+		--m_size;
 		return first;
 	}
 	
@@ -106,7 +113,7 @@ public:
 	{
 		int i = 0;
 		Node* cur = first;
-		for(Node* cur = first; cur->m_next && i < index; cur = cur->m_next, ++i);
+		for(cur; cur && i < index; cur = cur->m_next, ++i);
 		return cur->m_data;
 	}
 
@@ -114,7 +121,7 @@ public:
 	{
 		int i = 0;
 		Node* cur = first;
-		for(Node* cur = first; cur->m_next && i < index; cur = cur->m_next, ++i);
+		for(cur; cur && i < index; cur = cur->m_next, ++i);
 		return cur->m_data;	
 	}
 
@@ -123,11 +130,28 @@ public:
 		if(index >= m_size || index < 0) throw "Invalid index.";
 		int i = 0;
 		Node* cur = first;
-		for(Node* cur = first; cur->m_next && i < index; cur = cur->m_next, ++i);
+		for(cur; cur && i < index; cur = cur->m_next, ++i);
 		return cur->m_data;
 	}
 	size_t size() {return m_size;}
 	// ++it, *it, !it (class)
+	class Iterator
+	{
+		Node* m_it = nullptr;
+	public:
+		Iterator(Node* ptr) : m_it{ptr} {}
+		operator Node*() const {return m_it;}
+		Iterator& operator++() 
+		{
+			m_it = m_it->m_next;
+			return *this;
+		}
+		T operator*() {return m_it->m_data;}
+		bool operator!=(Iterator it) {return m_it != it;}
+		bool operator!() {return m_it == nullptr;}
+	};
+	Iterator begin() {return first;}
+	Iterator end() {return nullptr;}
 };
 
 #endif
