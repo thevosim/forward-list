@@ -4,6 +4,7 @@
 template<class T>
 class ForwardList
 {
+	friend class ForwardListTest;
 	struct Node
 	{
 		T m_data;
@@ -12,6 +13,20 @@ class ForwardList
 	};
 	Node* first = nullptr;
     int m_size = 0;
+
+	static Node* reverse(Node* start) 
+	{
+        Node* prev = nullptr;
+        Node* curr = start;
+        while (curr) 
+		{
+            Node* next = curr->m_next;
+            curr->m_next = prev;
+            prev = curr;
+            curr = next;
+        }
+        return prev;
+    }
 public:
 	ForwardList(){}
 	ForwardList(size_t n, T def)
@@ -143,7 +158,7 @@ public:
 		operator Node*() const {return m_it;}
 		Iterator& operator++() 
 		{
-			m_it = m_it->m_next;
+			if(m_it) m_it = m_it->m_next;
 			return *this;
 		}
 		T operator*() {return m_it->m_data;}
@@ -152,6 +167,42 @@ public:
 	};
 	Iterator begin() {return first;}
 	Iterator end() {return nullptr;}
+
+	ForwardList multiply(int n) 
+	{
+		ForwardList result;
+		if (n == 0) 
+		{
+			result.push_front(0);
+			return result;
+		}
+
+		first = reverse(first);
+
+		Node* curr = first;
+		long long carry = 0;
+
+		while (curr || carry > 0) 
+		{
+			long long curr_digit = 0;
+			
+			if (curr) curr_digit = curr->m_data;
+
+			long long product = curr_digit * n;
+			long long sum = product + carry;
+
+			int digit_to_write = sum % 10;
+			carry = sum / 10;
+
+			Node* newNode = new Node(digit_to_write);
+			newNode->m_next = result.first;
+			result.first = newNode;
+
+			if (curr) curr = curr->m_next;
+    	}
+		first = reverse(first);
+		return result;
+	}
 };
 
 #endif
